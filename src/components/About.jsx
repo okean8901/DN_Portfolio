@@ -5,6 +5,7 @@ const LINKEDIN_PROFILE_URL = 'https://www.linkedin.com/in/nguyen-dang-duong/';
 export function About() {
   const badgeRef = useRef(null);
   const [badgeRendered, setBadgeRendered] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
   const vanity = useMemo(() => 'dương-nguyễn-đăng-a87665346', []);
 
   useEffect(() => {
@@ -34,11 +35,15 @@ export function About() {
     const t3 = window.setTimeout(() => {
       if (isActuallyRendered()) setBadgeRendered(true);
     }, 2500);
+    const t4 = window.setTimeout(() => {
+      if (!isActuallyRendered()) setShowFallback(true);
+    }, 5500);
 
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.clearTimeout(t3);
+      window.clearTimeout(t4);
       mo.disconnect();
     };
   }, []);
@@ -68,7 +73,7 @@ export function About() {
               </div>
 
               {/* Always-available fallback card (works even if LinkedIn is blocked) */}
-              <div className="glass-card" style={{ display: badgeRendered ? 'none' : 'block', padding: '1.2rem', marginTop: 12 }}>
+              <div className="glass-card" style={{ display: !badgeRendered && showFallback ? 'block' : 'none', padding: '1.2rem', marginTop: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                   <div
                     style={{
