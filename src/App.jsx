@@ -16,12 +16,30 @@ export default function App() {
   usePageEffects();
 
   useEffect(() => {
-    if (document.querySelector(`script[src="${LINKEDIN_BADGE_SCRIPT}"]`)) return;
+    const existing = document.querySelector(`script[src="${LINKEDIN_BADGE_SCRIPT}"]`);
+    if (existing) {
+      // In case script loaded before React mounted the badge element.
+      window.setTimeout(() => {
+        try {
+          window.LI?.ProfileBadge?.init?.();
+        } catch {
+          // ignore
+        }
+      }, 0);
+      return;
+    }
     const script = document.createElement('script');
     script.src = LINKEDIN_BADGE_SCRIPT;
     script.async = true;
     script.defer = true;
     script.type = 'text/javascript';
+    script.onload = () => {
+      try {
+        window.LI?.ProfileBadge?.init?.();
+      } catch {
+        // ignore
+      }
+    };
     document.body.appendChild(script);
   }, []);
 

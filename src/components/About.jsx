@@ -1,25 +1,91 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+const LINKEDIN_PROFILE_URL =
+  'https://vn.linkedin.com/in/d%C6%B0%C6%A1ng-nguy%E1%BB%85n-%C4%91%C4%83ng-a87665346?trk=profile-badge';
+
 export function About() {
+  const badgeRef = useRef(null);
+  const [badgeReady, setBadgeReady] = useState(false);
+  const [fallbackVisible, setFallbackVisible] = useState(false);
+
+  const vanity = useMemo(() => 'dương-nguyễn-đăng-a87665346', []);
+
+  useEffect(() => {
+    const el = badgeRef.current;
+    if (!el) return;
+
+    // Try to trigger LinkedIn badge parsing when the element exists (React timing).
+    const tryInit = () => {
+      try {
+        window.LI?.ProfileBadge?.init?.();
+      } catch {
+        // ignore
+      }
+    };
+
+    tryInit();
+
+    const mo = new MutationObserver(() => {
+      // When LinkedIn script renders, it injects extra nodes into the container.
+      if (el.childElementCount > 1) setBadgeReady(true);
+    });
+    mo.observe(el, { childList: true, subtree: true });
+
+    const t1 = window.setTimeout(() => tryInit(), 700);
+    const t2 = window.setTimeout(() => tryInit(), 1600);
+    const t3 = window.setTimeout(() => {
+      if (!badgeReady && el.childElementCount <= 1) setFallbackVisible(true);
+    }, 2500);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+      mo.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <section id="about" className="bg-s">
       <div className="container">
         <div className="about-grid">
           <div className="reveal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxWidth: '100%' }}>
             <div
+              ref={badgeRef}
               className="badge-base LI-profile-badge"
               data-locale="en_US"
               data-size="medium"
               data-theme="dark"
               data-type="VERTICAL"
-              data-vanity="dương-nguyễn-đăng-a87665346"
+              data-vanity={vanity}
               data-version="v1"
               style={{ maxWidth: '100%', transform: 'scale(1.4)' }}
             >
               <a
                 className="badge-base__link LI-simple-link"
-                href="https://vn.linkedin.com/in/d%C6%B0%C6%A1ng-nguy%E1%BB%85n-%C4%91%C4%83ng-a87665346?trk=profile-badge"
-                style={{ display: 'none' }}
+                href={LINKEDIN_PROFILE_URL}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: fallbackVisible ? 'inline-flex' : 'none',
+                  marginTop: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '0.55rem 1rem',
+                  borderRadius: 10,
+                  border: '1px solid rgba(99,179,237,.28)',
+                  color: 'var(--accent)',
+                  background: 'rgba(99,179,237,.07)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  textDecoration: 'none',
+                }}
               >
-                Dương Nguyễn Đăng
+                View profile
               </a>
             </div>
           </div>
