@@ -49,31 +49,39 @@ export function About() {
         <div className="about-grid">
           <div className="reveal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxWidth: '100%' }}>
             <div style={{ width: '100%', maxWidth: 360 }}>
-              <div style={{ display: badgeRendered ? 'block' : 'none' }}>
-                <div style={{ overflow: 'hidden', borderRadius: 14 }}>
-                  <div
-                    ref={badgeRef}
-                    className="badge-base LI-profile-badge"
-                    data-locale="en_US"
-                    data-size="medium"
-                    data-theme="dark"
-                    data-type="VERTICAL"
-                    data-vanity={vanity}
-                    data-version="v1"
-                    style={{ maxWidth: '100%', overflow: 'hidden' }}
-                  >
-                    <a className="badge-base__link LI-simple-link" href={LINKEDIN_PROFILE_URL} style={{ display: 'none' }}>
-                      Dương Nguyễn Đăng
-                    </a>
-                  </div>
+              <div style={{ overflow: 'hidden', borderRadius: 14 }}>
+                <div
+                  ref={badgeRef}
+                  className="badge-base LI-profile-badge"
+                  data-locale="en_US"
+                  data-size="medium"
+                  data-theme="dark"
+                  data-type="VERTICAL"
+                  data-vanity={vanity}
+                  data-version="v1"
+                  style={{ maxWidth: '100%', overflow: 'hidden' }}
+                >
+                  <a className="badge-base__link LI-simple-link" href={LINKEDIN_PROFILE_URL} style={{ display: 'none' }}>
+                    Dương Nguyễn Đăng
+                  </a>
                 </div>
               </div>
 
               {/* Always-available fallback card (works even if LinkedIn is blocked) */}
-              <div className="glass-card" style={{ display: badgeRendered ? 'none' : 'block', padding: '1.2rem' }}>
+              <div className="glass-card" style={{ display: badgeRendered ? 'none' : 'block', padding: '1.2rem', marginTop: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div className="sc-avatar" style={{ width: 44, height: 44, fontSize: '1.15rem' }}>
-                    D
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      border: '1px solid rgba(99,179,237,.25)',
+                      background: 'linear-gradient(135deg, var(--accent), #3182ce)',
+                    }}
+                  >
+                    <img src="/avt.jfif" alt="Dương Nguyễn Đăng" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>Dương Nguyễn Đăng</div>
