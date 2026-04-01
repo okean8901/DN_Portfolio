@@ -9,20 +9,13 @@ export function About() {
               href={LINKEDIN_PROFILE_URL}
               target="_blank"
               rel="noreferrer"
-              style={{ width: '100%', maxWidth: 360, display: 'block', textDecoration: 'none' }}
+              className="linkedin-badge-link"
               aria-label="Open LinkedIn profile"
             >
               <img
                 src="/linkedin-badge.png"
                 alt="LinkedIn badge"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  display: 'block',
-                  borderRadius: 14,
-                  border: '1px solid var(--border)',
-                  background: 'var(--surface)',
-                }}
+                className="linkedin-badge-img"
               />
             </a>
           </div>
