@@ -50,20 +50,22 @@ export function About() {
           <div className="reveal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxWidth: '100%' }}>
             <div style={{ width: '100%', maxWidth: 360 }}>
               <div style={{ display: badgeRendered ? 'block' : 'none' }}>
-                <div
-                  ref={badgeRef}
-                  className="badge-base LI-profile-badge"
-                  data-locale="en_US"
-                  data-size="medium"
-                  data-theme="dark"
-                  data-type="VERTICAL"
-                  data-vanity={vanity}
-                  data-version="v1"
-                  style={{ maxWidth: '100%', transform: 'scale(1.15)', transformOrigin: 'top center' }}
-                >
-                  <a className="badge-base__link LI-simple-link" href={LINKEDIN_PROFILE_URL} style={{ display: 'none' }}>
-                    Dương Nguyễn Đăng
-                  </a>
+                <div style={{ overflow: 'hidden', borderRadius: 14 }}>
+                  <div
+                    ref={badgeRef}
+                    className="badge-base LI-profile-badge"
+                    data-locale="en_US"
+                    data-size="medium"
+                    data-theme="dark"
+                    data-type="VERTICAL"
+                    data-vanity={vanity}
+                    data-version="v1"
+                    style={{ maxWidth: '100%', overflow: 'hidden' }}
+                  >
+                    <a className="badge-base__link LI-simple-link" href={LINKEDIN_PROFILE_URL} style={{ display: 'none' }}>
+                      Dương Nguyễn Đăng
+                    </a>
+                  </div>
                 </div>
               </div>
 
