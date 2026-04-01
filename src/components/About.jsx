@@ -1,20 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-const LINKEDIN_PROFILE_URL =
-  'https://vn.linkedin.com/in/d%C6%B0%C6%A1ng-nguy%E1%BB%85n-%C4%91%C4%83ng-a87665346?trk=profile-badge';
+const LINKEDIN_PROFILE_URL = 'https://www.linkedin.com/in/nguyen-dang-duong/';
 
 export function About() {
   const badgeRef = useRef(null);
-  const [badgeReady, setBadgeReady] = useState(false);
-  const [fallbackVisible, setFallbackVisible] = useState(false);
-
+  const [badgeRendered, setBadgeRendered] = useState(false);
   const vanity = useMemo(() => 'dương-nguyễn-đăng-a87665346', []);
 
   useEffect(() => {
     const el = badgeRef.current;
     if (!el) return;
 
-    // Try to trigger LinkedIn badge parsing when the element exists (React timing).
+    const isActuallyRendered = () => Boolean(el.querySelector('iframe'));
+
     const tryInit = () => {
       try {
         window.LI?.ProfileBadge?.init?.();
@@ -26,15 +24,15 @@ export function About() {
     tryInit();
 
     const mo = new MutationObserver(() => {
-      // When LinkedIn script renders, it injects extra nodes into the container.
-      if (el.childElementCount > 1) setBadgeReady(true);
+      // Only treat as rendered when an iframe is injected (script blockers may leave only the fallback link text).
+      if (isActuallyRendered()) setBadgeRendered(true);
     });
     mo.observe(el, { childList: true, subtree: true });
 
-    const t1 = window.setTimeout(() => tryInit(), 700);
-    const t2 = window.setTimeout(() => tryInit(), 1600);
+    const t1 = window.setTimeout(tryInit, 700);
+    const t2 = window.setTimeout(tryInit, 1600);
     const t3 = window.setTimeout(() => {
-      if (!badgeReady && el.childElementCount <= 1) setFallbackVisible(true);
+      if (isActuallyRendered()) setBadgeRendered(true);
     }, 2500);
 
     return () => {
@@ -43,7 +41,6 @@ export function About() {
       window.clearTimeout(t3);
       mo.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -51,44 +48,49 @@ export function About() {
       <div className="container">
         <div className="about-grid">
           <div className="reveal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxWidth: '100%' }}>
-            <div
-              ref={badgeRef}
-              className="badge-base LI-profile-badge"
-              data-locale="en_US"
-              data-size="medium"
-              data-theme="dark"
-              data-type="VERTICAL"
-              data-vanity={vanity}
-              data-version="v1"
-              style={{ maxWidth: '100%', transform: 'scale(1.4)' }}
-            >
-              <a
-                className="badge-base__link LI-simple-link"
-                href={LINKEDIN_PROFILE_URL}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: fallbackVisible ? 'inline-flex' : 'none',
-                  marginTop: 10,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  padding: '0.55rem 1rem',
-                  borderRadius: 10,
-                  border: '1px solid rgba(99,179,237,.28)',
-                  color: 'var(--accent)',
-                  background: 'rgba(99,179,237,.07)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                }}
-              >
-                View profile
-              </a>
+            <div style={{ width: '100%', maxWidth: 360 }}>
+              <div style={{ display: badgeRendered ? 'block' : 'none' }}>
+                <div
+                  ref={badgeRef}
+                  className="badge-base LI-profile-badge"
+                  data-locale="en_US"
+                  data-size="medium"
+                  data-theme="dark"
+                  data-type="VERTICAL"
+                  data-vanity={vanity}
+                  data-version="v1"
+                  style={{ maxWidth: '100%', transform: 'scale(1.15)', transformOrigin: 'top center' }}
+                >
+                  <a className="badge-base__link LI-simple-link" href={LINKEDIN_PROFILE_URL} style={{ display: 'none' }}>
+                    Dương Nguyễn Đăng
+                  </a>
+                </div>
+              </div>
+
+              {/* Always-available fallback card (works even if LinkedIn is blocked) */}
+              <div className="glass-card" style={{ display: badgeRendered ? 'none' : 'block', padding: '1.2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div className="sc-avatar" style={{ width: 44, height: 44, fontSize: '1.15rem' }}>
+                    D
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>Dương Nguyễn Đăng</div>
+                    <div style={{ color: 'var(--muted)', fontSize: '0.78rem', lineHeight: 1.5 }}>
+                      Assistant Project Coordinator (IT/Software) | Project Coordinator (IT/Software) | Registered Scrum Basic™ (RSB) | Agile &amp; Design Thinking
+                    </div>
+                    <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent)' }}>Sabo Game</div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                  <a href={LINKEDIN_PROFILE_URL} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
+                    View profile
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
+
           <div className="reveal d1">
             <div className="section-chip">About Me</div>
             <h2 className="sec-title" style={{ marginBottom: '1.25rem', marginTop: '0.5rem' }}>
