@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { About } from './components/About';
 import { Contact } from './components/Contact';
 import { Experience } from './components/Experience';
@@ -9,39 +9,9 @@ import { Navbar } from './components/Navbar';
 import { Projects } from './components/Projects';
 import { usePageEffects } from './usePageEffects';
 
-const LINKEDIN_BADGE_SCRIPT = 'https://platform.linkedin.com/badges/js/profile.js';
-
 export default function App() {
   const [toastVisible, setToastVisible] = useState(false);
   usePageEffects();
-
-  useEffect(() => {
-    const existing = document.querySelector(`script[src="${LINKEDIN_BADGE_SCRIPT}"]`);
-    if (existing) {
-      // In case script loaded before React mounted the badge element.
-      window.setTimeout(() => {
-        try {
-          window.LI?.ProfileBadge?.init?.();
-        } catch {
-          // ignore
-        }
-      }, 0);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = LINKEDIN_BADGE_SCRIPT;
-    script.async = true;
-    script.defer = true;
-    script.type = 'text/javascript';
-    script.onload = () => {
-      try {
-        window.LI?.ProfileBadge?.init?.();
-      } catch {
-        // ignore
-      }
-    };
-    document.body.appendChild(script);
-  }, []);
 
   const onSendMessage = useCallback(() => {
     setToastVisible(true);

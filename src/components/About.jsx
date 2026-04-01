@@ -1,109 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-
-const LINKEDIN_PROFILE_URL = 'https://www.linkedin.com/in/nguyen-dang-duong/';
-
 export function About() {
-  const badgeRef = useRef(null);
-  const [badgeRendered, setBadgeRendered] = useState(false);
-  const [showFallback, setShowFallback] = useState(false);
-  const vanity = useMemo(() => 'dương-nguyễn-đăng-a87665346', []);
-
-  useEffect(() => {
-    const el = badgeRef.current;
-    if (!el) return;
-
-    const isActuallyRendered = () => Boolean(el.querySelector('iframe'));
-
-    const tryInit = () => {
-      try {
-        window.LI?.ProfileBadge?.init?.();
-      } catch {
-        // ignore
-      }
-    };
-
-    tryInit();
-
-    const mo = new MutationObserver(() => {
-      // Only treat as rendered when an iframe is injected (script blockers may leave only the fallback link text).
-      if (isActuallyRendered()) setBadgeRendered(true);
-    });
-    mo.observe(el, { childList: true, subtree: true });
-
-    const t1 = window.setTimeout(tryInit, 700);
-    const t2 = window.setTimeout(tryInit, 1600);
-    const t3 = window.setTimeout(() => {
-      if (isActuallyRendered()) setBadgeRendered(true);
-    }, 2500);
-    const t4 = window.setTimeout(() => {
-      if (!isActuallyRendered()) setShowFallback(true);
-    }, 5500);
-
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
-      window.clearTimeout(t4);
-      mo.disconnect();
-    };
-  }, []);
-
+  const LINKEDIN_PROFILE_URL = 'https://www.linkedin.com/in/nguyen-dang-duong';
   return (
     <section id="about" className="bg-s">
       <div className="container">
         <div className="about-grid">
           <div className="reveal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxWidth: '100%' }}>
-            <div style={{ width: '100%', maxWidth: 360 }}>
-              <div style={{ overflow: 'hidden', borderRadius: 14 }}>
-                <div
-                  ref={badgeRef}
-                  className="badge-base LI-profile-badge"
-                  data-locale="en_US"
-                  data-size="medium"
-                  data-theme="dark"
-                  data-type="VERTICAL"
-                  data-vanity={vanity}
-                  data-version="v1"
-                  style={{ maxWidth: '100%', overflow: 'hidden' }}
-                >
-                  <a className="badge-base__link LI-simple-link" href={LINKEDIN_PROFILE_URL} style={{ display: 'none' }}>
-                    Dương Nguyễn Đăng
-                  </a>
-                </div>
-              </div>
-
-              {/* Always-available fallback card (works even if LinkedIn is blocked) */}
-              <div className="glass-card" style={{ display: !badgeRendered && showFallback ? 'block' : 'none', padding: '1.2rem', marginTop: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: '50%',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                      border: '1px solid rgba(99,179,237,.25)',
-                      background: 'linear-gradient(135deg, var(--accent), #3182ce)',
-                    }}
-                  >
-                    <img src="/avt.jfif" alt="Dương Nguyễn Đăng" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>Dương Nguyễn Đăng</div>
-                    <div style={{ color: 'var(--muted)', fontSize: '0.78rem', lineHeight: 1.5 }}>
-                      Assistant Project Coordinator (IT/Software) | Project Coordinator (IT/Software) | Registered Scrum Basic™ (RSB) | Agile &amp; Design Thinking
-                    </div>
-                    <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent)' }}>Sabo Game</div>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 12 }}>
-                  <a href={LINKEDIN_PROFILE_URL} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
-                    View profile
-                  </a>
-                </div>
-              </div>
-            </div>
+            <a
+              href={LINKEDIN_PROFILE_URL}
+              target="_blank"
+              rel="noreferrer"
+              style={{ width: '100%', maxWidth: 360, display: 'block', textDecoration: 'none' }}
+              aria-label="Open LinkedIn profile"
+            >
+              <img
+                src="/linkedin-badge.png"
+                alt="LinkedIn badge"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  display: 'block',
+                  borderRadius: 14,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                }}
+              />
+            </a>
           </div>
 
           <div className="reveal d1">
