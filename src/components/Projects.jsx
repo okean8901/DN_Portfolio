@@ -21,6 +21,20 @@ export function Projects() {
   const [draft, setDraft] = React.useState(null);
 
   React.useEffect(() => {
+    const sync = () => setIsAdmin(localStorage.getItem(ADMIN_LS_KEY) === '1');
+    const onStorage = (e) => {
+      if (e.key !== ADMIN_LS_KEY) return;
+      sync();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('admin-mode-changed', sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('admin-mode-changed', sync);
+    };
+  }, []);
+
+  React.useEffect(() => {
     const prev = document.body.style.overflow;
     const shouldLock = editorOpen;
     if (shouldLock) document.body.style.overflow = 'hidden';
