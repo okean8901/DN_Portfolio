@@ -237,7 +237,7 @@ export function Projects() {
         body: JSON.stringify(badges.map(normalizeBadge).filter(Boolean)),
       });
       const data = await resp.json().catch(() => null);
-      if (!resp.ok) throw new Error(`http_${resp.status}`);
+      if (!resp.ok) throw new Error(data?.detail ? `${data.detail}` : `http_${resp.status}`);
       if (!data?.ok) throw new Error(data?.error || 'save_failed');
       setSyncState('idle');
       window.alert('Saved.');
