@@ -10,11 +10,9 @@ function json(res, statusCode, body) {
   res.end(JSON.stringify(body));
 }
 
-function getBearerToken(req) {
-  const header = req.headers?.authorization || req.headers?.Authorization;
-  if (!header || typeof header !== 'string') return null;
-  const m = header.match(/^Bearer\s+(.+)$/i);
-  return m ? m[1] : null;
+function getAdminPass(req) {
+  const header = req.headers?.['x-admin-pass'] || req.headers?.['X-Admin-Pass'];
+  return typeof header === 'string' ? header : null;
 }
 
 async function readRawBody(req) {
@@ -56,10 +54,15 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      const expected = process.env.ADMIN_TOKEN;
-      const token = getBearerToken(req);
-      if (!expected || token !== expected) {
-        return json(res, 401, { ok: false, error: 'unauthorized' });
+      const expected = process.env.ADMIN_PASS;
+      const pass = getAdminPass(req);
+      if (!expected) {
+        // Keep behavior explicit: if not configured, don't allow writes.
+        return json(res, 200, { ok: false, error: 'admin_pass_not_configured' });
+      }
+      if (!pass || pass !== expected) {
+        // No 401/unauthorized — return ok:false instead.
+        return json(res, 200, { ok: false, error: 'wrong_password' });
       }
 
       const body = typeof req.body === 'string' ? req.body : await readRawBody(req);

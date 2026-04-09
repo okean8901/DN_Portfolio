@@ -11,7 +11,7 @@ export function Projects() {
 
   const ADMIN_LS_KEY = 'dn_portfolio_admin';
   const ADMIN_PASSPHRASE = '123';
-  const ADMIN_TOKEN_LS_KEY = 'dn_portfolio_admin_token';
+  const ADMIN_PASS_LS_KEY = 'dn_portfolio_admin_pass';
 
   const [isAdmin, setIsAdmin] = React.useState(() => localStorage.getItem(ADMIN_LS_KEY) === '1');
   const [badges, setBadges] = React.useState(DEFAULT_BADGES);
@@ -221,10 +221,10 @@ export function Projects() {
   };
 
   const saveBadgesToServer = async () => {
-    const existing = localStorage.getItem(ADMIN_TOKEN_LS_KEY) || '';
-    const token = window.prompt('Admin token', existing) ?? '';
-    if (!token.trim()) return;
-    localStorage.setItem(ADMIN_TOKEN_LS_KEY, token.trim());
+    const existing = localStorage.getItem(ADMIN_PASS_LS_KEY) || '';
+    const pass = window.prompt('Admin password', existing) ?? '';
+    if (!pass.trim()) return;
+    localStorage.setItem(ADMIN_PASS_LS_KEY, pass.trim());
 
     setSyncState('saving');
     try {
@@ -232,12 +232,13 @@ export function Projects() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token.trim()}`,
+          'X-Admin-Pass': pass.trim(),
         },
         body: JSON.stringify(badges.map(normalizeBadge).filter(Boolean)),
       });
       const data = await resp.json().catch(() => null);
-      if (!resp.ok || !data?.ok) throw new Error(data?.error || `http_${resp.status}`);
+      if (!resp.ok) throw new Error(`http_${resp.status}`);
+      if (!data?.ok) throw new Error(data?.error || 'save_failed');
       setSyncState('idle');
       window.alert('Saved.');
     } catch (e) {
