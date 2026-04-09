@@ -1,9 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import db from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth } from '../firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const projectMeta = { fontFamily: 'var(--font-mono)', fontSize: '0.63rem', marginBottom: '0.4rem', letterSpacing: '0.04em' };
 const projectH4 = { fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '0.98rem', marginBottom: '0.6rem', color: 'var(--text)' };
@@ -11,13 +7,11 @@ const projectP = { color: 'var(--muted)', fontSize: '0.82rem', lineHeight: 1.75,
 
 export function Projects() {
   const DEFAULT_BADGES = [];
-  const FIRESTORE_COLLECTION = 'site';
-  const FIRESTORE_DOC = 'badge';
-  const ADMIN_EMAIL = 'YOUR_ADMIN_EMAIL@example.com';
+  const API_BADGES = '/api/badges';
 
-  const ADMIN_LS_KEY = '123';
-  const BADGES_LS_KEY = '123';
+  const ADMIN_LS_KEY = 'dn_portfolio_admin';
   const ADMIN_PASSPHRASE = '123';
+  const ADMIN_TOKEN_LS_KEY = 'dn_portfolio_admin_token';
 
   const [isAdmin, setIsAdmin] = React.useState(() => localStorage.getItem(ADMIN_LS_KEY) === '1');
   const [badges, setBadges] = React.useState(DEFAULT_BADGES);
@@ -25,20 +19,15 @@ export function Projects() {
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState('edit'); // add | edit
   const [draft, setDraft] = React.useState(null);
-  const [authUser, setAuthUser] = React.useState(null);
-  const [loginOpen, setLoginOpen] = React.useState(false);
-  const [loginEmail, setLoginEmail] = React.useState('');
-  const [loginPass, setLoginPass] = React.useState('');
-  const [authErr, setAuthErr] = React.useState('');
 
   React.useEffect(() => {
     const prev = document.body.style.overflow;
-    const shouldLock = editorOpen || loginOpen;
+    const shouldLock = editorOpen;
     if (shouldLock) document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [editorOpen, loginOpen]);
+  }, [editorOpen]);
 
   const normalizeBadge = React.useCallback((b) => {
     if (!b || typeof b !== 'object') return null;
@@ -59,23 +48,15 @@ export function Projects() {
   }, []);
 
   React.useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setAuthUser(u || null));
-    return () => unsub();
-  }, []);
-
-  React.useEffect(() => {
     let cancelled = false;
     const load = async () => {
       setSyncState('loading');
       try {
-        const ref = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const data = snap.data();
-          if (!cancelled && Array.isArray(data.items)) {
-            const normalized = data.items.map(normalizeBadge).filter(Boolean);
-            setBadges(normalized);
-          }
+        const resp = await fetch(`${API_BADGES}?t=${Date.now()}`, { method: 'GET', cache: 'no-store' });
+        if (!resp.ok) throw new Error(`http_${resp.status}`);
+        const data = await resp.json();
+        if (!cancelled && data?.ok && Array.isArray(data.items)) {
+          setBadges(data.items.map(normalizeBadge).filter(Boolean));
         }
         if (!cancelled) setSyncState('idle');
       } catch {
@@ -224,36 +205,33 @@ export function Projects() {
   };
 
   const saveBadgesToServer = async () => {
-    if (!authUser) {
-      setLoginOpen(true);
-      return;
-    }
+    const existing = localStorage.getItem(ADMIN_TOKEN_LS_KEY) || '';
+    const token = window.prompt('Admin token', existing) ?? '';
+    if (!token.trim()) return;
+    localStorage.setItem(ADMIN_TOKEN_LS_KEY, token.trim());
+
     setSyncState('saving');
     try {
-      const ref = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC);
-      await setDoc(ref, { items: badges.map(normalizeBadge).filter(Boolean) }, { merge: true });
+      const resp = await fetch(API_BADGES, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.trim()}`,
+        },
+        body: JSON.stringify(badges.map(normalizeBadge).filter(Boolean)),
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok || !data?.ok) throw new Error(data?.error || `http_${resp.status}`);
       setSyncState('idle');
-      window.alert('Saved to Firebase.');
+      window.alert('Saved.');
     } catch (e) {
       setSyncState('error');
-      window.alert(`Save to Firebase failed: ${e?.code || ''} ${e?.message || ''}`.trim());
+      window.alert(`Save failed: ${e?.message || ''}`.trim());
     }
   };
 
-  const doLogin = async () => {
-    setAuthErr('');
-    try {
-      await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPass);
-      setLoginOpen(false);
-      setLoginPass('');
-    } catch (e) {
-      setAuthErr(e?.message || 'Login failed');
-    }
-  };
-
-  const doLogout = async () => {
-    await signOut(auth);
-  };
+  const doLogin = null;
+  const doLogout = null;
 
   return (
     <section id="projects">
@@ -282,15 +260,6 @@ export function Projects() {
                   <button type="button" className="bw-btn" onClick={saveBadgesToServer} disabled={syncState === 'saving'}>
                     {syncState === 'saving' ? 'Saving…' : 'Save'}
                   </button>
-                  {authUser ? (
-                    <button type="button" className="bw-btn" onClick={doLogout}>
-                      Logout
-                    </button>
-                  ) : (
-                    <button type="button" className="bw-btn" onClick={() => setLoginOpen(true)}>
-                      Login
-                    </button>
-                  )}
                   <button
                     type="button"
                     className="bw-btn"
@@ -420,44 +389,7 @@ export function Projects() {
           </div>
         ) : null}
 
-        {isAdmin && loginOpen ? (
-          <div className="bw-modal" role="dialog" aria-modal="true" aria-label="Admin login">
-            <div className="bw-modal-card">
-              <div className="bw-modal-top">
-                <div className="bw-modal-title">Admin Login</div>
-                <button type="button" className="bw-admin-btn" onClick={() => { setLoginOpen(false); setAuthErr(''); }}>
-                  Close
-                </button>
-              </div>
-
-              <div className="bw-form">
-                <label className="bw-field bw-field--full">
-                  <span>Email</span>
-                  <input
-                    value={loginEmail}
-                    placeholder={ADMIN_EMAIL}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                  />
-                </label>
-                <label className="bw-field bw-field--full">
-                  <span>Password</span>
-                  <input
-                    type="password"
-                    value={loginPass}
-                    onChange={(e) => setLoginPass(e.target.value)}
-                  />
-                </label>
-                {authErr ? <div className="bw-auth-err">{authErr}</div> : null}
-              </div>
-
-              <div className="bw-modal-actions">
-                <button type="button" className="bw-btn bw-btn--primary" onClick={doLogin}>
-                  Login
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        {null}
 
       {/* ══════════════════════════════
             KEY PROJECTS

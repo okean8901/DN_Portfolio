@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import db from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+const API_BADGES = '/api/badges';
 
 function Field({ label, value }) {
   return (
@@ -20,9 +19,10 @@ export function BadgeDetail() {
     let cancelled = false;
     const load = async () => {
       try {
-        const ref = doc(db, 'site', 'badge');
-        const snap = await getDoc(ref);
-        const items = snap.exists() ? snap.data()?.items : null;
+        const resp = await fetch(`${API_BADGES}?t=${Date.now()}`, { method: 'GET', cache: 'no-store' });
+        if (!resp.ok) throw new Error('bad_response');
+        const data = await resp.json();
+        const items = data?.ok ? data?.items : null;
         const found = Array.isArray(items) ? items.find((b) => b?.id === badgeId) : null;
         if (!cancelled) setState({ status: found ? 'ready' : 'not_found', badge: found || null });
       } catch {
