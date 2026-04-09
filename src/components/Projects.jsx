@@ -82,6 +82,7 @@ export function Projects() {
     const trigger = () => {
       if (localStorage.getItem(ADMIN_LS_KEY) === '1') {
         localStorage.removeItem(ADMIN_LS_KEY);
+        window.dispatchEvent(new Event('admin-mode-changed'));
         setIsAdmin(false);
         return;
       }
@@ -89,6 +90,7 @@ export function Projects() {
       const pass = window.prompt('Admin passphrase');
       if (pass && pass.trim() === ADMIN_PASSPHRASE) {
         localStorage.setItem(ADMIN_LS_KEY, '1');
+        window.dispatchEvent(new Event('admin-mode-changed'));
         setIsAdmin(true);
       } else if (pass !== null) {
         window.alert('Sai mật khẩu.');
@@ -256,18 +258,6 @@ export function Projects() {
             <div className="bw-actions">
               {isAdmin ? (
                 <>
-                  <button
-                    type="button"
-                    className="bw-btn"
-                    onClick={() => {
-                      const ok = window.confirm('Có muốn thoát admin mode không?');
-                      if (!ok) return;
-                      localStorage.removeItem(ADMIN_LS_KEY);
-                      setIsAdmin(false);
-                    }}
-                  >
-                    Admin Mode
-                  </button>
                   <button type="button" className="bw-btn bw-btn--primary" onClick={openAdd}>+ Add Badge</button>
                   <button type="button" className="bw-btn" onClick={saveBadgesToServer} disabled={syncState === 'saving'}>
                     {syncState === 'saving' ? 'Saving…' : 'Save'}
@@ -282,12 +272,7 @@ export function Projects() {
                     Reset
                   </button>
                 </>
-              ) : (
-                <>
-                  <button type="button" className="bw-btn bw-btn--primary">+ Upload Other Badges</button>
-                  <button type="button" className="bw-btn bw-btn--ghost">Reorder/Edit</button>
-                </>
-              )}
+              ) : null}
             </div>
           </div>
 
