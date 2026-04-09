@@ -8,19 +8,16 @@ export function Navbar() {
           </a>
           <div className="nav-links">
             <a href="#about" className="nav-link">
-              About
-            </a>
-            <a href="#expertise" className="nav-link">
-              Expertise
+              Giới thiệu
             </a>
             <a href="#experience" className="nav-link">
-              Experience
+              Kinh nghiệm
             </a>
             <a href="#projects" className="nav-link">
-              Projects
+              Kỹ năng & Chứng chỉ
             </a>
             <a href="#contact" className="nav-link">
-              Contact
+              Liên hệ
             </a>
           </div>
           <a href="#contact" className="btn btn-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }}>
