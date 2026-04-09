@@ -256,6 +256,18 @@ export function Projects() {
             <div className="bw-actions">
               {isAdmin ? (
                 <>
+                  <button
+                    type="button"
+                    className="bw-btn"
+                    onClick={() => {
+                      const ok = window.confirm('Có muốn thoát admin mode không?');
+                      if (!ok) return;
+                      localStorage.removeItem(ADMIN_LS_KEY);
+                      setIsAdmin(false);
+                    }}
+                  >
+                    Admin Mode
+                  </button>
                   <button type="button" className="bw-btn bw-btn--primary" onClick={openAdd}>+ Add Badge</button>
                   <button type="button" className="bw-btn" onClick={saveBadgesToServer} disabled={syncState === 'saving'}>
                     {syncState === 'saving' ? 'Saving…' : 'Save'}
