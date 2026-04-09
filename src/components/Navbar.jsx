@@ -24,7 +24,7 @@ export function Navbar() {
             </a>
           </div>
           <a href="#contact" className="btn btn-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }}>
-            Hire Me
+            Liên hệ ngay
           </a>
         </div>
       </div>

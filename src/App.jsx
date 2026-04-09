@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { About } from './components/About';
 import { Contact } from './components/Contact';
 import { Experience } from './components/Experience';
-import { Expertise } from './components/Expertise';
+
 import { Footer } from './components/Footer';
 import { Hero } from './components/Hero';
 import { Navbar } from './components/Navbar';
@@ -24,8 +24,6 @@ export default function App() {
       <Hero />
       <hr className="s-divider" />
       <About />
-      <hr className="s-divider" />
-      <Expertise />
       <hr className="s-divider" />
       <Experience />
       <hr className="s-divider" />

@@ -14,11 +14,11 @@ export function Experience() {
       <div className="container">
         <div className="exp-layout">
           <div className="reveal" style={{ position: 'sticky', top: '5.5rem' }}>
-            <div className="section-chip">Experience</div>
+            <div className="section-chip">Kinh nghiệm làm việc</div>
             <h2 className="sec-title" style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
-              Career
+              Hành trình
               <br />
-              <em>Journey</em>
+              <em>Sự nghiệp</em>
             </h2>
             <p style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.85, marginBottom: '1.5rem' }}>
               Từ QA Engineer → QA Lead → Project Coordinator. Hành trình xây dựng trên nền tảng chất lượng và tư duy hệ
