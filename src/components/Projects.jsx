@@ -1,55 +1,81 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import db from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth } from '../firebase';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const projectMeta = { fontFamily: 'var(--font-mono)', fontSize: '0.63rem', marginBottom: '0.4rem', letterSpacing: '0.04em' };
 const projectH4 = { fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '0.98rem', marginBottom: '0.6rem', color: 'var(--text)' };
 const projectP = { color: 'var(--muted)', fontSize: '0.82rem', lineHeight: 1.75, marginBottom: '0.9rem' };
 
 export function Projects() {
-  const DEFAULT_BADGES = [
-    { id: 'b1', title: 'Google AI Essentials V1', issuer: 'Coursera', issued: 'Issued Mar 12, 2026', img: '/chungchi.jfif' },
-    { id: 'b2', title: 'Google Project Management Professional Certificate(v.3)', issuer: 'Coursera', issued: 'Issued Mar 13, 2026', img: '/chungchi.jfif' },
-    { id: 'b3', title: 'Google Prompting Essentials', issuer: 'Coursera', issued: 'Issued Mar 12, 2026', img: '/chungchi.jfif' },
-    { id: 'b4', title: 'PMI Essentials M.O.R.E. Maximizing Project Success', issuer: 'Project Management Institute', issued: 'Issued Apr 1, 2026', img: '/chungchi.jfif' },
-    { id: 'b5', title: 'PMI® Essentials: Seven AI Project Patterns', issuer: 'Project Management Institute', issued: 'Issued Mar 31, 2026', img: '/chungchi.jfif' },
-  ];
+  const DEFAULT_BADGES = [];
+  const FIRESTORE_COLLECTION = 'site';
+  const FIRESTORE_DOC = 'badge';
+  const ADMIN_EMAIL = 'YOUR_ADMIN_EMAIL@example.com';
 
   const ADMIN_LS_KEY = '123';
   const BADGES_LS_KEY = '123';
   const ADMIN_PASSPHRASE = '123';
-  const ADMIN_TOKEN_LS_KEY = '123';
-  const API_BADGES = '/api/badges';
 
   const [isAdmin, setIsAdmin] = React.useState(() => localStorage.getItem(ADMIN_LS_KEY) === '1');
-  const [badges, setBadges] = React.useState(() => {
-    try {
-      const raw = localStorage.getItem(BADGES_LS_KEY);
-      if (!raw) return DEFAULT_BADGES;
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : DEFAULT_BADGES;
-    } catch {
-      return DEFAULT_BADGES;
-    }
-  });
+  const [badges, setBadges] = React.useState(DEFAULT_BADGES);
   const [syncState, setSyncState] = React.useState('idle'); // idle | loading | saving | error
+  const [editorOpen, setEditorOpen] = React.useState(false);
+  const [editorMode, setEditorMode] = React.useState('edit'); // add | edit
+  const [draft, setDraft] = React.useState(null);
+  const [authUser, setAuthUser] = React.useState(null);
+  const [loginOpen, setLoginOpen] = React.useState(false);
+  const [loginEmail, setLoginEmail] = React.useState('');
+  const [loginPass, setLoginPass] = React.useState('');
+  const [authErr, setAuthErr] = React.useState('');
 
   React.useEffect(() => {
-    try {
-      localStorage.setItem(BADGES_LS_KEY, JSON.stringify(badges));
-    } catch {
-      // ignore
-    }
-  }, [badges]);
+    const prev = document.body.style.overflow;
+    const shouldLock = editorOpen || loginOpen;
+    if (shouldLock) document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [editorOpen, loginOpen]);
+
+  const normalizeBadge = React.useCallback((b) => {
+    if (!b || typeof b !== 'object') return null;
+    return {
+      id: String(b.id || `b_${Date.now()}`),
+      badgePic: b.badgePic || b.img || '',
+      title: b.title || '',
+      issuingOrganization: b.issuingOrganization || b.issuer || '',
+      description: b.description || '',
+      issuingDate: b.issuingDate || b.issued || '',
+      expirationDate: b.expirationDate || '',
+      credentialId: b.credentialId || '',
+      credentialUrl: b.credentialUrl || '',
+      statusBadge: b.statusBadge || '',
+      skills: Array.isArray(b.skills) ? b.skills : [],
+      earningCriteria: b.earningCriteria || '',
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => setAuthUser(u || null));
+    return () => unsub();
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
     const load = async () => {
       setSyncState('loading');
       try {
-        const resp = await fetch(`${API_BADGES}?t=${Date.now()}`, { method: 'GET', cache: 'no-store' });
-        if (!resp.ok) throw new Error('bad_response');
-        const data = await resp.json();
-        if (!cancelled && data?.ok && Array.isArray(data.badges)) {
-          setBadges(data.badges);
+        const ref = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (!cancelled && Array.isArray(data.items)) {
+            const normalized = data.items.map(normalizeBadge).filter(Boolean);
+            setBadges(normalized);
+          }
         }
         if (!cancelled) setSyncState('idle');
       } catch {
@@ -63,18 +89,16 @@ export function Projects() {
   }, []);
 
   React.useEffect(() => {
-    let hits = [];
-    const onKeyDown = (e) => {
-      if (!e.altKey || !e.shiftKey) return;
-      if (e.key.toLowerCase() !== 'a') return;
+    let holdTimer = null;
+    let armed = false;
 
-      const now = Date.now();
-      hits = hits.filter((t) => now - t < 1500);
-      hits.push(now);
+    const clearHold = () => {
+      if (holdTimer) window.clearTimeout(holdTimer);
+      holdTimer = null;
+      armed = false;
+    };
 
-      if (hits.length < 3) return;
-      hits = [];
-
+    const trigger = () => {
       if (localStorage.getItem(ADMIN_LS_KEY) === '1') {
         localStorage.removeItem(ADMIN_LS_KEY);
         setIsAdmin(false);
@@ -85,31 +109,113 @@ export function Projects() {
       if (pass && pass.trim() === ADMIN_PASSPHRASE) {
         localStorage.setItem(ADMIN_LS_KEY, '1');
         setIsAdmin(true);
+      } else if (pass !== null) {
+        window.alert('Sai mật khẩu.');
       }
     };
 
+    const isCombo = (e) => e.altKey && e.shiftKey && e.key.toLowerCase() === 'a';
+
+    const onKeyDown = (e) => {
+      if (!isCombo(e)) return;
+      if (e.repeat) return;
+      if (armed) return;
+      armed = true;
+      holdTimer = window.setTimeout(() => {
+        trigger();
+        clearHold();
+      }, 3000);
+    };
+
+    const onKeyUp = (e) => {
+      if (e.key.toLowerCase() !== 'a' && e.key !== 'Alt' && e.key !== 'Shift') return;
+      clearHold();
+    };
+
+    const onBlur = () => clearHold();
+
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+      clearHold();
+    };
   }, []);
 
-  const addBadge = () => {
-    const title = window.prompt('Title');
-    if (!title) return;
-    const issuer = window.prompt('Issuer') ?? '';
-    const issued = window.prompt('Issued (e.g. "Issued Mar 12, 2026")') ?? '';
-    const img = window.prompt('Image URL/path (e.g. "/chungchi.jfif")') ?? '/chungchi.jfif';
-    setBadges((prev) => [{ id: `b_${Date.now()}`, title, issuer, issued, img }, ...prev]);
+  const openAdd = () => {
+    setEditorMode('add');
+    setDraft({
+      id: `b_${Date.now()}`,
+      badgePic: '',
+      title: '',
+      issuingOrganization: '',
+      description: '',
+      issuingDate: '',
+      expirationDate: '',
+      credentialId: '',
+      credentialUrl: '',
+      statusBadge: '',
+      skillsText: '',
+      earningCriteria: '',
+    });
+    setEditorOpen(true);
   };
 
-  const editBadge = (id) => {
+  const openEdit = (id) => {
     const current = badges.find((b) => b.id === id);
     if (!current) return;
-    const title = window.prompt('Title', current.title);
-    if (!title) return;
-    const issuer = window.prompt('Issuer', current.issuer) ?? '';
-    const issued = window.prompt('Issued', current.issued) ?? '';
-    const img = window.prompt('Image URL/path', current.img) ?? current.img;
-    setBadges((prev) => prev.map((b) => (b.id === id ? { ...b, title, issuer, issued, img } : b)));
+    const c = normalizeBadge(current);
+    setEditorMode('edit');
+    setDraft({
+      id: c.id,
+      badgePic: c.badgePic,
+      title: c.title,
+      issuingOrganization: c.issuingOrganization,
+      description: c.description,
+      issuingDate: c.issuingDate,
+      expirationDate: c.expirationDate,
+      credentialId: c.credentialId,
+      credentialUrl: c.credentialUrl,
+      statusBadge: c.statusBadge,
+      skillsText: (c.skills || []).join(', '),
+      earningCriteria: c.earningCriteria,
+    });
+    setEditorOpen(true);
+  };
+
+  const upsertDraft = () => {
+    if (!draft?.id) return;
+    const skills = String(draft.skillsText || '')
+      .split(/[\n,]+/g)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const next = normalizeBadge({
+      id: draft.id,
+      badgePic: draft.badgePic,
+      title: draft.title,
+      issuingOrganization: draft.issuingOrganization,
+      description: draft.description,
+      issuingDate: draft.issuingDate,
+      expirationDate: draft.expirationDate,
+      credentialId: draft.credentialId,
+      credentialUrl: draft.credentialUrl,
+      statusBadge: draft.statusBadge,
+      skills,
+      earningCriteria: draft.earningCriteria,
+    });
+
+    setBadges((prev) => {
+      const idx = prev.findIndex((b) => b.id === next.id);
+      if (idx === -1) return [next, ...prev];
+      const copy = [...prev];
+      copy[idx] = next;
+      return copy;
+    });
+    setEditorOpen(false);
+    setDraft(null);
   };
 
   const deleteBadge = (id) => {
@@ -118,32 +224,35 @@ export function Projects() {
   };
 
   const saveBadgesToServer = async () => {
-    const existing = localStorage.getItem(ADMIN_TOKEN_LS_KEY) || '';
-    const token = window.prompt('Admin token (Bearer)', existing) ?? '';
-    if (!token.trim()) return;
-    localStorage.setItem(ADMIN_TOKEN_LS_KEY, token.trim());
-
+    if (!authUser) {
+      setLoginOpen(true);
+      return;
+    }
     setSyncState('saving');
     try {
-      const resp = await fetch(API_BADGES, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token.trim()}`,
-        },
-        body: JSON.stringify(badges),
-      });
-      const data = await resp.json().catch(() => null);
-      if (!resp.ok || !data?.ok) {
-        const msg = data?.error ? `${data.error}` : `http_${resp.status}`;
-        throw new Error(msg);
-      }
+      const ref = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC);
+      await setDoc(ref, { items: badges.map(normalizeBadge).filter(Boolean) }, { merge: true });
       setSyncState('idle');
-      window.alert('Saved.');
-    } catch {
+      window.alert('Saved to Firebase.');
+    } catch (e) {
       setSyncState('error');
-      window.alert('Save failed. (Tip: local Vite dev does not serve /api. Use Vercel deploy or vercel dev.)');
+      window.alert(`Save to Firebase failed: ${e?.code || ''} ${e?.message || ''}`.trim());
     }
+  };
+
+  const doLogin = async () => {
+    setAuthErr('');
+    try {
+      await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPass);
+      setLoginOpen(false);
+      setLoginPass('');
+    } catch (e) {
+      setAuthErr(e?.message || 'Login failed');
+    }
+  };
+
+  const doLogout = async () => {
+    await signOut(auth);
   };
 
   return (
@@ -169,15 +278,23 @@ export function Projects() {
             <div className="bw-actions">
               {isAdmin ? (
                 <>
-                  <button type="button" className="bw-btn bw-btn--primary" onClick={addBadge}>+ Add Badge</button>
+                  <button type="button" className="bw-btn bw-btn--primary" onClick={openAdd}>+ Add Badge</button>
                   <button type="button" className="bw-btn" onClick={saveBadgesToServer} disabled={syncState === 'saving'}>
                     {syncState === 'saving' ? 'Saving…' : 'Save'}
                   </button>
+                  {authUser ? (
+                    <button type="button" className="bw-btn" onClick={doLogout}>
+                      Logout
+                    </button>
+                  ) : (
+                    <button type="button" className="bw-btn" onClick={() => setLoginOpen(true)}>
+                      Login
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="bw-btn"
                     onClick={() => {
-                      localStorage.removeItem(BADGES_LS_KEY);
                       setBadges(DEFAULT_BADGES);
                     }}
                   >
@@ -194,26 +311,153 @@ export function Projects() {
           </div>
 
           <div className="bw-grid" aria-label="Credly badges">
-            {badges.map((b) => (
+            {badges.length ? badges.map((b) => (
               <div className="bw-card" key={b.id}>
-                <div className="bw-card-art">
-                  <img className="bw-card-img" src={b.img} alt="" />
-                </div>
-                <div className="bw-card-body">
-                  <div className="bw-card-title">{b.title}</div>
-                  <div className="bw-card-issuer">{b.issuer}</div>
-                  <div className="bw-card-date">{b.issued}</div>
-                  {isAdmin ? (
-                    <div className="bw-admin-row">
-                      <button type="button" className="bw-admin-btn" onClick={() => editBadge(b.id)}>Edit</button>
-                      <button type="button" className="bw-admin-btn bw-admin-btn--danger" onClick={() => deleteBadge(b.id)}>Delete</button>
-                    </div>
-                  ) : null}
-                </div>
+                <Link className="bw-card-link" to={`/badge/${b.id}`} aria-label={`Open ${b.title || 'badge'}`}>
+                  <div className="bw-card-art">
+                    {b.badgePic || b.img ? <img className="bw-card-img" src={b.badgePic || b.img} alt="" /> : null}
+                  </div>
+                  <div className="bw-card-body">
+                    <div className="bw-card-title">{b.title || 'Untitled'}</div>
+                    <div className="bw-card-issuer">{b.issuingOrganization || b.issuer || '—'}</div>
+                    <div className="bw-card-date">{b.issuingDate || b.issued || '—'}</div>
+                  </div>
+                </Link>
+
+                {isAdmin ? (
+                  <div className="bw-admin-row bw-admin-row--pad">
+                    <button type="button" className="bw-admin-btn" onClick={() => openEdit(b.id)}>Edit</button>
+                    <button type="button" className="bw-admin-btn bw-admin-btn--danger" onClick={() => deleteBadge(b.id)}>Delete</button>
+                  </div>
+                ) : null}
               </div>
-            ))}
+            )) : (
+              <div className="bw-empty">
+                {isAdmin ? 'No badges yet. Click “Add Badge” then “Save”.' : 'No badges yet.'}
+              </div>
+            )}
           </div>
         </div>
+
+        {isAdmin && editorOpen && draft ? (
+          <div className="bw-modal" role="dialog" aria-modal="true" aria-label="Edit badge">
+            <div className="bw-modal-card">
+              <div className="bw-modal-top">
+                <div className="bw-modal-title">{editorMode === 'add' ? 'Add Badge' : 'Edit Badge'}</div>
+                <button type="button" className="bw-admin-btn" onClick={() => { setEditorOpen(false); setDraft(null); }}>Close</button>
+              </div>
+
+              <div className="bw-form">
+                <label className="bw-field">
+                  <span>Badge Title</span>
+                  <input value={draft.title} onChange={(e) => setDraft((p) => ({ ...p, title: e.target.value }))} />
+                </label>
+                <label className="bw-field">
+                  <span>Issuing Organization</span>
+                  <input value={draft.issuingOrganization} onChange={(e) => setDraft((p) => ({ ...p, issuingOrganization: e.target.value }))} />
+                </label>
+                <label className="bw-field bw-field--full">
+                  <span>Description</span>
+                  <textarea rows={4} value={draft.description} onChange={(e) => setDraft((p) => ({ ...p, description: e.target.value }))} />
+                </label>
+                <label className="bw-field">
+                  <span>Issuing Date</span>
+                  <input value={draft.issuingDate} onChange={(e) => setDraft((p) => ({ ...p, issuingDate: e.target.value }))} />
+                </label>
+                <label className="bw-field">
+                  <span>Expiration Date</span>
+                  <input value={draft.expirationDate} onChange={(e) => setDraft((p) => ({ ...p, expirationDate: e.target.value }))} />
+                </label>
+                <label className="bw-field">
+                  <span>Credential ID</span>
+                  <input value={draft.credentialId} onChange={(e) => setDraft((p) => ({ ...p, credentialId: e.target.value }))} />
+                </label>
+                <label className="bw-field">
+                  <span>Credential URL</span>
+                  <input value={draft.credentialUrl} onChange={(e) => setDraft((p) => ({ ...p, credentialUrl: e.target.value }))} />
+                </label>
+                <label className="bw-field">
+                  <span>Status Badge</span>
+                  <input value={draft.statusBadge} onChange={(e) => setDraft((p) => ({ ...p, statusBadge: e.target.value }))} />
+                </label>
+                <label className="bw-field">
+                  <span>BadgePic</span>
+                  <input value={draft.badgePic} onChange={(e) => setDraft((p) => ({ ...p, badgePic: e.target.value }))} />
+                </label>
+                <label className="bw-field">
+                  <span>Upload Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const result = typeof reader.result === 'string' ? reader.result : '';
+                        if (result) setDraft((p) => ({ ...p, badgePic: result }));
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+                <label className="bw-field bw-field--full">
+                  <span>Skills (comma or newline separated)</span>
+                  <textarea rows={3} value={draft.skillsText} onChange={(e) => setDraft((p) => ({ ...p, skillsText: e.target.value }))} />
+                </label>
+                <label className="bw-field bw-field--full">
+                  <span>Earning Criteria</span>
+                  <textarea rows={3} value={draft.earningCriteria} onChange={(e) => setDraft((p) => ({ ...p, earningCriteria: e.target.value }))} />
+                </label>
+              </div>
+
+              <div className="bw-modal-actions">
+                <button type="button" className="bw-btn bw-btn--primary" onClick={upsertDraft}>
+                  {editorMode === 'add' ? 'Add' : 'Update'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {isAdmin && loginOpen ? (
+          <div className="bw-modal" role="dialog" aria-modal="true" aria-label="Admin login">
+            <div className="bw-modal-card">
+              <div className="bw-modal-top">
+                <div className="bw-modal-title">Admin Login</div>
+                <button type="button" className="bw-admin-btn" onClick={() => { setLoginOpen(false); setAuthErr(''); }}>
+                  Close
+                </button>
+              </div>
+
+              <div className="bw-form">
+                <label className="bw-field bw-field--full">
+                  <span>Email</span>
+                  <input
+                    value={loginEmail}
+                    placeholder={ADMIN_EMAIL}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                  />
+                </label>
+                <label className="bw-field bw-field--full">
+                  <span>Password</span>
+                  <input
+                    type="password"
+                    value={loginPass}
+                    onChange={(e) => setLoginPass(e.target.value)}
+                  />
+                </label>
+                {authErr ? <div className="bw-auth-err">{authErr}</div> : null}
+              </div>
+
+              <div className="bw-modal-actions">
+                <button type="button" className="bw-btn bw-btn--primary" onClick={doLogin}>
+                  Login
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
       {/* ══════════════════════════════
             KEY PROJECTS

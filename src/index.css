@@ -1276,6 +1276,16 @@ footer {
   gap: 1.05rem;
 }
 
+.bw-empty {
+  grid-column: 1 / -1;
+  background: var(--surface2);
+  border: 1px dashed rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  padding: 1.2rem;
+  color: var(--muted);
+  text-align: center;
+}
+
 .bw-card {
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -1297,6 +1307,12 @@ footer {
   justify-content: center;
   background: linear-gradient(180deg, rgba(99, 179, 237, 0.06) 0%, transparent 100%);
   border-bottom: 1px solid var(--border);
+}
+
+.bw-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 
 .bw-card-img {
@@ -1338,6 +1354,11 @@ footer {
   margin-top: 0.75rem;
 }
 
+.bw-admin-row--pad {
+  padding: 0 0.95rem 1rem;
+  margin-top: 0;
+}
+
 .bw-admin-btn {
   appearance: none;
   border: 1px solid rgba(99, 179, 237, 0.28);
@@ -1361,6 +1382,265 @@ footer {
 
 .bw-admin-btn--danger:hover {
   background: rgba(239, 68, 68, 0.08);
+}
+
+.bw-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+}
+
+.bw-modal-card {
+  width: min(920px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.bw-modal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.bw-modal-title {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.bw-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.bw-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bw-field span {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bw-field input,
+.bw-field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.bw-field input[type="file"] {
+  padding: 0.6rem 0.85rem;
+}
+
+.bw-field textarea {
+  resize: vertical;
+}
+
+.bw-field--full {
+  grid-column: 1 / -1;
+}
+
+.bw-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.9rem;
+}
+
+.bw-auth-err {
+  grid-column: 1 / -1;
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .bw-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Credly-like badge detail page */
+.credly-detail {
+  padding: 6rem 0;
+}
+
+.credly-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem;
+}
+
+.credly-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.credly-back,
+.credly-link {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.credly-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+}
+
+.credly-left {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--surface2);
+}
+
+.credly-badge-art {
+  height: 220px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(99, 179, 237, 0.06) 0%, transparent 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  margin-bottom: 0.9rem;
+}
+
+.credly-badge-art img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  display: block;
+}
+
+.credly-left-title {
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.credly-left-sub {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.credly-right {
+  padding: 0.25rem 0;
+}
+
+.credly-h1 {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 0.35rem;
+}
+
+.credly-sub {
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+
+.credly-section {
+  margin-bottom: 1.2rem;
+}
+
+.credly-section-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.credly-text {
+  color: var(--text-2);
+  line-height: 1.8;
+  font-size: 0.95rem;
+}
+
+.credly-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+  margin: 1.1rem 0;
+}
+
+.credly-field {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+}
+
+.credly-field-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.credly-field-value {
+  color: var(--text);
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.credly-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.credly-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 6px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(99, 179, 237, 0.22);
+}
+
+.credly-muted {
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .credly-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
