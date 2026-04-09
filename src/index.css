@@ -1401,6 +1401,8 @@ footer {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1rem;
+  max-height: calc(100vh - 2.4rem);
+  overflow-y: auto;
 }
 
 .bw-modal-top {
