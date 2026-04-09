@@ -45,8 +45,9 @@ async function readLatestBadges() {
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
+      res.setHeader('Cache-Control', 'no-store, max-age=0');
       const data = await readLatestBadges();
-      return json(res, 200, { ok: true, badges: Array.isArray(data) ? data : null });
+      return json(res, 200, { ok: true, badges: Array.isArray(data) ? data : [] });
     }
 
     if (req.method === 'PUT') {

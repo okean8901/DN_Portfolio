@@ -45,10 +45,10 @@ export function Projects() {
     const load = async () => {
       setSyncState('loading');
       try {
-        const resp = await fetch(API_BADGES, { method: 'GET', cache: 'no-store' });
+        const resp = await fetch(`${API_BADGES}?t=${Date.now()}`, { method: 'GET', cache: 'no-store' });
         if (!resp.ok) throw new Error('bad_response');
         const data = await resp.json();
-        if (!cancelled && data?.ok && Array.isArray(data.badges) && data.badges.length) {
+        if (!cancelled && data?.ok && Array.isArray(data.badges)) {
           setBadges(data.badges);
         }
         if (!cancelled) setSyncState('idle');
